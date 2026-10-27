@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Demba Diop</title>
+<meta name="description" content="Papa Demba Diop, ingénieur en génie électrique et automatisation industrielle, spécialisé dans la supervision des bornes de recharge pour véhicules électriques.">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout : une colonne de lecture, chaque section est une "ligne" de supervision avec son étiquette à gauche sur grand écran. */
+:root {
+  --bg: #f3f5f6;
+  --surface: #ffffff;
+  --fg: #14212b;
+  --muted: #5a6872;
+  --line: #d5dde2;
+  --accent: #0b6e8a;      /* bleu pétrole : le câble */
+  --charge: #c77a00;      /* ambre : borne en charge */
+  --ok: #1f8a4c;          /* vert : borne disponible */
+  --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f171d; --surface: #16222a; --fg: #e4ecf0; --muted: #93a3ad; --line: #26353f;
+    --accent: #4fb8d6; --charge: #f0a83a; --ok: #4cc27f; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f171d; --surface: #16222a; --fg: #e4ecf0; --muted: #93a3ad; --line: #26353f;
+  --accent: #4fb8d6; --charge: #f0a83a; --ok: #4cc27f; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 1rem/1.65 var(--font-body);
+}
+.wrap {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding-block: 3.5rem 4rem;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid;
+  gap: 3.5rem;
+}
+a { color: var(--accent); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+/* En-tête */
+header { display: grid; gap: 1.25rem; }
+.status {
+  justify-self: start;
+  display: inline-flex; align-items: center; gap: .55rem;
+  font: 500 .78rem/1 var(--font-mono);
+  letter-spacing: .06em; text-transform: uppercase;
+  color: var(--ok);
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: .45rem .8rem;
+}
+.status::before {
+  content: ""; width: .5rem; height: .5rem; border-radius: 50%;
+  background: currentColor;
+  animation: pulse 2.4s ease-in-out infinite;
+}
+@keyframes pulse { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .status::before { animation: none; } }
+h1 {
+  margin: 0;
+  font: 800 clamp(2.6rem, 9vw, 5.2rem)/.95 var(--font-display);
+  font-stretch: 78%;
+  letter-spacing: -.01em;
+  text-wrap: balance;
+}
+h1 .first { display: block; font-weight: 500; color: var(--muted); font-size: .42em; letter-spacing: .02em; margin-bottom: .35rem; }
+.role {
+  margin: 0;
+  font: 600 clamp(1.1rem, 2.6vw, 1.4rem)/1.35 var(--font-display);
+  font-stretch: 90%;
+  color: var(--accent);
+  text-wrap: balance;
+}
+.intro { margin: 0; max-width: 62ch; color: var(--fg); font-size: 1.08rem; }
+.meta { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; margin: 0; padding: 0; list-style: none; font: 400 .88rem/1.4 var(--font-mono); color: var(--muted); }
+
+/* Bandeau de mesures */
+.readout {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+}
+.readout div { padding: 1rem .25rem 1rem 0; display: grid; gap: .15rem; }
+.readout div + div { padding-left: 1rem; border-left: 1px solid var(--line); }
+.readout b { font: 700 1.7rem/1.1 var(--font-display); font-stretch: 80%; font-variant-numeric: tabular-nums; }
+.readout span { font: 400 .74rem/1.3 var(--font-mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+@media (max-width: 640px) {
+  .readout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .readout div:nth-child(3) { padding-left: 0; border-left: 0; }
+  .readout div:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+
+/* Sections */
+section { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: 1rem 2rem; }
+@media (max-width: 760px) { section { grid-template-columns: minmax(0, 1fr); } }
+h2 {
+  margin: 0; padding-top: .3rem;
+  font: 500 .78rem/1.3 var(--font-mono);
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--muted);
+}
+.list { display: grid; gap: 2rem; margin: 0; padding: 0; list-style: none; }
+
+.item { display: grid; gap: .4rem; }
+.item-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .25rem 1rem; }
+h3 { margin: 0; font: 700 1.25rem/1.25 var(--font-display); font-stretch: 88%; text-wrap: balance; }
+.org { margin: 0; color: var(--accent); font-weight: 500; }
+.date { font: 400 .82rem/1.4 var(--font-mono); color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.item ul { margin: .25rem 0 0; padding-left: 1.1rem; display: grid; gap: .3rem; max-width: 66ch; }
+.item ul li::marker { color: var(--accent); }
+.tag {
+  display: inline-block; vertical-align: middle;
+  font: 500 .68rem/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase;
+  padding: .3rem .5rem; border-radius: 4px; margin-left: .4rem;
+  color: var(--charge); border: 1px solid currentColor;
+}
+
+/* Compétences */
+.skills { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem 2rem; }
+@media (max-width: 560px) { .skills { grid-template-columns: minmax(0, 1fr); } }
+.skills h3 { font-size: 1rem; margin-bottom: .6rem; }
+.chips { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0; padding: 0; list-style: none; }
+.chips li {
+  font: 400 .85rem/1 var(--font-mono);
+  padding: .45rem .6rem; border-radius: 4px;
+  background: var(--surface); border: 1px solid var(--line);
+}
+
+/* Contact */
+.contact { display: grid; gap: 1rem; }
+.contact p { margin: 0; max-width: 60ch; }
+.mail-row { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+.mail { font: 500 1.15rem/1.3 var(--font-mono); overflow-wrap: anywhere; }
+.copy {
+  font: 500 .8rem/1 var(--font-mono); letter-spacing: .04em;
+  padding: .55rem .8rem; border-radius: 4px; cursor: pointer;
+  background: var(--accent); color: var(--bg); border: 0;
+}
+.copy:hover { filter: brightness(1.1); }
+
+footer { border-top: 1px solid var(--line); padding-top: 1.25rem; font: 400 .8rem/1.5 var(--font-mono); color: var(--muted); }
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <header>
+    <span class="status">Disponible · recherche un CDI</span>
+    <h1><span class="first">Papa</span>Demba Diop</h1>
+    <p class="role">Ingénieur en génie électrique et automatisation industrielle</p>
+    <p class="intro">Ingénieur ENSEA en automatique et électronique industrielle, je travaille depuis septembre 2025 chez Bouygues Energies &amp; Services sur la supervision et l'exploitation technique de bornes de recharge pour véhicules électriques (IRVE). J'y diagnostique des défauts électriques, firmware et de communication, j'automatise des tâches en Python et je suis la performance du parc sous Power BI.</p>
+    <p class="intro">Je cherche un CDI en génie électrique : réseaux et systèmes électriques, électronique de puissance, mobilité électrique, essais et validation.</p>
+    <ul class="meta">
+      <li>Île-de-France</li>
+      <li>Diplômé ENSEA 2025</li>
+      <li>Français · Anglais B2</li>
+    </ul>
+  </header>
+
+  <div class="readout" aria-label="En bref">
+    <div><b>AC / DC</b><span>Bornes supervisées</span></div>
+    <div><b>OCPP</b><span>Analyse de logs</span></div>
+    <div><b>MLI</b><span>Commande de convertisseur</span></div>
+    <div><b>2025</b><span>Diplôme d'ingénieur</span></div>
+  </div>
+
+  <section id="experiences">
+    <h2>Expériences</h2>
+    <ol class="list">
+      <li class="item">
+        <div class="item-head">
+          <h3>Ingénieur IRVE, supervision et exploitation technique <span class="tag">En cours</span></h3>
+          <span class="date">Sept. 2025 → aujourd'hui</span>
+        </div>
+        <p class="org">Bouygues Energies &amp; Services · Île-de-France · après mon stage de fin d'études</p>
+        <ul>
+          <li>Supervision technique d'un parc de bornes de recharge AC/DC : suivi des états, des mesures électriques et de la disponibilité.</li>
+          <li>Traitement des incidents : diagnostic, interventions à distance (redémarrages contrôlés, contrôle des automates internes) et suivi jusqu'à résolution.</li>
+          <li>Analyse des logs OCPP et des logs embarqués pour trouver l'origine des défauts : firmware, communication ou électrique.</li>
+          <li>Automatisation de tâches récurrentes avec des scripts Python et des appels API.</li>
+          <li>Analyse des données de charge et de disponibilité sous Power BI et Metabase, avec des tableaux de bord de suivi.</li>
+        </ul>
+      </li>
+      <li class="item">
+        <div class="item-head">
+          <h3>Modélisation et commande d'un convertisseur de puissance pour véhicule électrique</h3>
+          <span class="date">Sept. 2024 → Fév. 2025</span>
+        </div>
+        <p class="org">Projet ingénieur, ENSEA</p>
+        <ul>
+          <li>Modélisation du convertisseur sous Simulink.</li>
+          <li>Implémentation d'une commande MLI (modulation de largeur d'impulsion).</li>
+          <li>Optimisation du rendement énergétique et validation fonctionnelle du système.</li>
+        </ul>
+      </li>
+      <li class="item">
+        <div class="item-head">
+          <h3>Stage assistant ingénieur : usages de l'IA dans l'automobile</h3>
+          <span class="date">Juin 2024 → Août 2024</span>
+        </div>
+        <p class="org">Stellantis</p>
+        <ul>
+          <li>Analyse des cas d'usage de l'intelligence artificielle dans l'industrie automobile.</li>
+          <li>Benchmark et études comparatives de solutions d'IA.</li>
+          <li>Rédaction de cahiers des charges et de comparatifs.</li>
+        </ul>
+      </li>
+    </ol>
+  </section>
+
+  <section id="formation">
+    <h2>Formation</h2>
+    <ol class="list">
+      <li class="item">
+        <div class="item-head">
+          <h3>Cycle ingénieur, automatique et électronique industrielle</h3>
+          <span class="date">2022 → 2025</span>
+        </div>
+        <p class="org">ENSEA, École nationale supérieure de l'électronique et de ses applications</p>
+      </li>
+      <li class="item">
+        <div class="item-head">
+          <h3>Classe préparatoire scientifique PCSI puis PSI</h3>
+          <span class="date">2019 → 2022</span>
+        </div>
+        <p class="org">Lycée Jean Jaurès</p>
+      </li>
+    </ol>
+  </section>
+
+  <section id="competences">
+    <h2>Compétences</h2>
+    <div class="skills">
+      <div>
+        <h3>Génie électrique et puissance</h3>
+        <ul class="chips"><li>Électronique de puissance</li><li>Commande MLI</li><li>Mesures électriques</li><li>Bornes AC/DC</li></ul>
+      </div>
+      <div>
+        <h3>Supervision et exploitation</h3>
+        <ul class="chips"><li>OCPP</li><li>Analyse de logs</li><li>Diagnostic de défauts</li><li>Interventions à distance</li><li>Suivi d'incidents</li></ul>
+      </div>
+      <div>
+        <h3>Modélisation et simulation</h3>
+        <ul class="chips"><li>MATLAB</li><li>Simulink</li><li>PSIM</li><li>Mathematica</li><li>LTspice</li></ul>
+      </div>
+      <div>
+        <h3>Data et programmation</h3>
+        <ul class="chips"><li>Python</li><li>SQL</li><li>C</li><li>Java</li><li>API</li><li>Postman</li></ul>
+      </div>
+      <div>
+        <h3>Électronique et embarqué</h3>
+        <ul class="chips"><li>STM32CubeIDE</li><li>Arduino</li><li>KiCad</li></ul>
+      </div>
+      <div>
+        <h3>Tableaux de bord</h3>
+        <ul class="chips"><li>Power BI</li><li>Metabase</li><li>Excel</li></ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <h2>Contact</h2>
+    <div class="contact">
+      <p>Vous cherchez un ingénieur en énergie, supervision ou électronique de puissance ? Écrivez-moi.</p>
+      <div class="mail-row">
+        <a class="mail" href="mailto:papadembadiop07@gmail.com">papadembadiop07@gmail.com</a>
+        <button class="copy" id="copy-mail" type="button">Copier l'adresse</button>
+      </div>
+      <p>En dehors du travail : lecture, football et musculation.</p>
+    </div>
+  </section>
+
+  <footer>© 2025 Papa Demba Diop · Site hébergé sur GitHub Pages</footer>
+</main>
+<script>
+  document.getElementById("copy-mail").addEventListener("click", function () {
+    var btn = this, mail = document.querySelector(".mail");
+    function done(t) { btn.textContent = t; setTimeout(function () { btn.textContent = "Copier l'adresse"; }, 1800); }
+    function fallback() {
+      var r = document.createRange(); r.selectNodeContents(mail);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      done("Adresse sélectionnée");
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(mail.textContent).then(function () { done("Copiée"); }, fallback);
+    } else { fallback(); }
+  });
+</script>
+</body>
+</html>
